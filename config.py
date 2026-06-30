@@ -7,6 +7,8 @@ load_dotenv()
 
 # --- API Keys ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+GEMINI_MODEL = "gemini-3.1-flash-lite"
 HF_TOKEN = os.getenv("HF_TOKEN", "")  # Optional: for HuggingFace models
 
 # --- Qdrant (same as Day 18) ---
@@ -43,3 +45,22 @@ JUDGE_MODEL = "gpt-4o-mini"
 # --- Guardrail latency budget ---
 LATENCY_BUDGET_P95_MS = 500  # target: full guard stack P95 < 500ms
 PRESIDIO_LANGUAGE = "en"    # Presidio base language; custom VN recognizers added via PatternRecognizer
+
+def call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 400) -> str | None:
+    try:
+        from google import genai
+        client = genai.Client(api_key=GOOGLE_API_KEY)
+        combined = f"{system_prompt}\n\n{user_prompt}"
+        resp = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=combined,
+            config={"max_output_tokens": max(max_tokens, 1024), "temperature": 0.2},
+        )
+        return resp.text
+    except Exception as e:
+        print(f"  ⚠️  Google GenAI failed: {e}")
+        return None
+    return None
+
+def has_llm() -> bool:
+    return True

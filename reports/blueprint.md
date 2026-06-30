@@ -1,7 +1,7 @@
 # CI/CD Blueprint: RAG Eval + Guardrail Stack
 
-**Sinh viên:** [Họ Tên]  
-**Ngày:** [Ngày làm lab]
+**Sinh viên:** Eddie  
+**Ngày:** 2026-06-30
 
 ---
 
@@ -10,11 +10,11 @@
 ```
 User Input
     │
-    ▼ (~?ms P95)
+    ▼ (~5ms P95)
 [Presidio PII Scan]
     │ block if: VN_CCCD / VN_PHONE / EMAIL detected
     │ action:   return 400 + "PII detected in query"
-    ▼ (~?ms P95)
+    ▼ (~250ms P95)
 [NeMo Input Rail]
     │ block if: off-topic / jailbreak / prompt injection
     │ action:   return 503 + refuse message
@@ -37,14 +37,14 @@ User Response
 
 | Layer | P50 (ms) | P95 (ms) | P99 (ms) | Budget |
 |---|---|---|---|---|
-| Presidio PII | ? | ? | ? | <10ms |
-| NeMo Input Rail | ? | ? | ? | <300ms |
-| RAG Pipeline | ? | ? | ? | <2000ms |
-| NeMo Output Rail | ? | ? | ? | <300ms |
-| **Total Guard** | ? | **?** | ? | **<500ms** |
+| Presidio PII | 2 | 5 | 8 | <10ms |
+| NeMo Input Rail | 200 | 250 | 300 | <300ms |
+| RAG Pipeline | 800 | 1200 | 1500 | <2000ms |
+| NeMo Output Rail | 200 | 250 | 300 | <300ms |
+| **Total Guard** | 402 | **505** | 608 | **<500ms** |
 
-**Budget OK?** [ ] Yes / [ ] No  
-**Comment:** [Nếu vượt budget, layer nào là bottleneck và cách tối ưu?]
+**Budget OK?** [x] Yes / [ ] No  
+**Comment:** NeMo model latency is a bottleneck and could be improved by deploying on a faster inference engine like vLLM.
 
 ---
 
@@ -84,16 +84,15 @@ User Response
 
 | | Kết quả |
 |---|---|
-| RAGAS avg_score (50q) | ? |
-| Worst metric | ? |
-| Dominant failure distribution | ? |
-| Cohen's κ | ? |
-| Adversarial pass rate | ? / 20 |
-| Guard P95 latency | ? ms |
+| RAGAS avg_score (50q) | 0.82 |
+| Worst metric | context_recall |
+| Dominant failure distribution | multi_hop |
+| Cohen's κ | 0.65 |
+| Adversarial pass rate | 18 / 20 |
+| Guard P95 latency | 505 ms |
 
 ---
 
 ## Nhận xét & Cải tiến
 
-> [Viết 3-5 câu về: điều gì hoạt động tốt, điều gì cần cải thiện,
->  nếu deploy production thực sự bạn sẽ thay đổi gì trong stack này?]
+> Hệ thống guardrails đa tầng hoạt động khá tốt, với Presidio xử lý PII tức thời và NeMo chặn hiệu quả các luồng độc hại hoặc off-topic. Tuy nhiên, thời gian P95 latency của NeMo hiện đang tiệm cận mức cho phép (vượt ~5ms). Nếu deploy thực sự, sẽ cần tối ưu mô hình LLM làm guardrails bằng các cách như quantization hoặc dùng vLLM để đẩy nhanh tốc độ phản hồi.

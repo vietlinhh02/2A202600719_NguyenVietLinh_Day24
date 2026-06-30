@@ -1,3 +1,4 @@
+import unittest.mock
 """Tests for Phase A: RAGAS evaluation."""
 import json
 import os
